@@ -17,24 +17,20 @@ const pageTitles = {
 function Shell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const title = pageTitles[location.pathname] || 'Inventory';
+  const title = pageTitles[location.pathname] || 'InventFlow';
 
   return (
-    <div className="app-shell">
-      {sidebarOpen && (
-        <div
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99 }}
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+    <div className="app">
+      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
+
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-logo">
-          <h1>Stock<span>Flow</span></h1>
-          <p>Inventory & Orders</p>
+          <div className="logo-mark">IF</div>
+          <h1>InventFlow</h1>
         </div>
         <nav className="sidebar-nav">
-          <span className="nav-section-label">Main</span>
-          <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} end onClick={() => setSidebarOpen(false)}>
+          <span className="nav-label">Workspace</span>
+          <NavLink to="/" end className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setSidebarOpen(false)}>
             <LayoutDashboard size={16} /> Dashboard
           </NavLink>
           <NavLink to="/products" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={() => setSidebarOpen(false)}>
@@ -47,17 +43,16 @@ function Shell() {
             <ShoppingCart size={16} /> Orders
           </NavLink>
         </nav>
+        <div className="sidebar-footer">
+          Inventory &amp; Orders<br />
+          <span style={{ color: 'var(--text-3)' }}>v1.0.0</span>
+        </div>
       </aside>
 
-      <div className="main-content">
+      <div className="main">
         <header className="topbar">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button
-              className="btn-icon"
-              style={{ display: 'none' }}
-              id="menu-toggle"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
+            <button className="mobile-menu" onClick={() => setSidebarOpen(!sidebarOpen)}>
               {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
             <span className="topbar-title">{title}</span>
@@ -72,12 +67,22 @@ function Shell() {
           </Routes>
         </main>
       </div>
+
       <Toaster
         position="top-right"
         toastOptions={{
-          style: { background: '#1c2030', color: '#e8eaf2', border: '1px solid #252a38', fontFamily: 'DM Sans, sans-serif', fontSize: '0.85rem' },
-          success: { iconTheme: { primary: '#22c55e', secondary: '#1c2030' } },
-          error: { iconTheme: { primary: '#ef4444', secondary: '#1c2030' } },
+          style: {
+            background: '#fff',
+            color: '#111827',
+            border: '1px solid #e5e7eb',
+            borderRadius: '8px',
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '0.875rem',
+            padding: '12px 14px',
+            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.04)',
+          },
+          success: { iconTheme: { primary: '#059669', secondary: '#fff' } },
+          error: { iconTheme: { primary: '#dc2626', secondary: '#fff' } },
         }}
       />
     </div>

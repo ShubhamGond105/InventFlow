@@ -6,6 +6,14 @@ import { getOrders, getOrder, createOrder, deleteOrder, updateOrderStatus, getPr
 const STATUS_COLORS = { pending: 'amber', processing: 'blue', shipped: 'purple', delivered: 'green', cancelled: 'red' };
 const STATUS_OPTIONS = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
+const STATUS_VAR = {
+  amber: 'var(--warning)',
+  blue: 'var(--info)',
+  purple: 'var(--purple)',
+  green: 'var(--success)',
+  red: 'var(--danger)',
+};
+
 function CreateOrderModal({ onClose, onSave }) {
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
@@ -16,9 +24,8 @@ function CreateOrderModal({ onClose, onSave }) {
 
   useEffect(() => {
     Promise.all([getCustomers(), getProducts()]).then(([c, p]) => {
-      setCustomers(c.data);
-      setProducts(p.data);
-    });
+      setCustomers(c.data); setProducts(p.data);
+    }).catch(() => toast.error('Failed to load data'));
   }, []);
 
   const addItem = () => setItems([...items, { product_id: '', quantity: 1 }]);
@@ -45,7 +52,7 @@ function CreateOrderModal({ onClose, onSave }) {
         notes,
         items: validItems.map(i => ({ product_id: parseInt(i.product_id), quantity: parseInt(i.quantity) }))
       });
-      toast.success('Order created!');
+      toast.success('Order created');
       onSave();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Failed to create order');
@@ -56,63 +63,56 @@ function CreateOrderModal({ onClose, onSave }) {
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal modal-lg">
         <div className="modal-header">
-          <h3>Create New Order</h3>
-          <button className="btn-icon" onClick={onClose}>✕</button>
+          <h3>New Order</h3>
+          <button className="btn-icon" onClick={onClose}><X size={16} /></button>
         </div>
-
-        <div className="form-group">
-          <label>Customer *</label>
-          <select className="form-control" value={customerId} onChange={e => setCustomerId(e.target.value)}>
-            <option value="">Select a customer...</option>
-            {customers.map(c => <option key={c.id} value={c.id}>{c.name} ({c.email})</option>)}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Order Items *</label>
-          {items.map((item, i) => (
-            <div key={i} className="order-item-row" style={{ marginBottom: 10 }}>
-              <select className="form-control" value={item.product_id} onChange={e => updateItem(i, 'product_id', e.target.value)}>
-                <option value="">Select product...</option>
-                {products.map(p => (
-                  <option key={p.id} value={p.id} disabled={p.stock_quantity === 0}>
-                    {p.name} — ₹{p.price} (Stock: {p.stock_quantity})
-                  </option>
-                ))}
-              </select>
-              <input
-                className="form-control"
-                type="number" min="1"
-                value={item.quantity}
-                onChange={e => updateItem(i, 'quantity', e.target.value)}
-                placeholder="Qty"
-              />
-              {items.length > 1 && (
-                <button className="btn-icon btn-icon-danger" onClick={() => removeItem(i)}><X size={14} /></button>
-              )}
-            </div>
-          ))}
-          <button className="btn btn-secondary btn-sm" onClick={addItem}><Plus size={13} /> Add Item</button>
-        </div>
-
-        {items.some(i => i.product_id) && (
-          <div style={{ background: 'var(--bg)', borderRadius: 8, padding: '12px 16px', marginBottom: 16, border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--text2)', fontSize: '0.85rem' }}>Estimated Total</span>
-              <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1.1rem' }}>₹{getTotal().toLocaleString()}</span>
-            </div>
+        <div className="modal-body">
+          <div className="form-group">
+            <label>Customer <span className="req">*</span></label>
+            <select className="form-control" value={customerId} onChange={e => setCustomerId(e.target.value)}>
+              <option value="">Select a customer...</option>
+              {customers.map(c => <option key={c.id} value={c.id}>{c.name} ({c.email})</option>)}
+            </select>
           </div>
-        )}
 
-        <div className="form-group">
-          <label>Notes (optional)</label>
-          <textarea className="form-control" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Delivery instructions, special requests..." />
+          <div className="form-group">
+            <label>Products <span className="req">*</span></label>
+            {items.map((item, i) => (
+              <div key={i} className="order-item-row">
+                <select className="form-control" value={item.product_id} onChange={e => updateItem(i, 'product_id', e.target.value)}>
+                  <option value="">Select product...</option>
+                  {products.map(p => (
+                    <option key={p.id} value={p.id} disabled={p.stock_quantity === 0}>
+                      {p.name} — ₹{p.price} (Stock: {p.stock_quantity})
+                    </option>
+                  ))}
+                </select>
+                <input className="form-control" type="number" min="1" value={item.quantity} onChange={e => updateItem(i, 'quantity', e.target.value)} placeholder="Qty" />
+                {items.length > 1 ? (
+                  <button className="btn-icon btn-icon-danger" onClick={() => removeItem(i)}><X size={14} /></button>
+                ) : <div />}
+              </div>
+            ))}
+            <button className="btn btn-secondary btn-sm" onClick={addItem} style={{ marginTop: 4 }}><Plus size={13} /> Add Item</button>
+          </div>
+
+          {items.some(i => i.product_id) && (
+            <div className="summary">
+              <span className="summary-label">Order Total</span>
+              <span className="summary-value">₹{getTotal().toLocaleString('en-IN')}</span>
+            </div>
+          )}
+
+          <div className="form-group">
+            <label>Notes (optional)</label>
+            <textarea className="form-control" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Delivery instructions, special requests..." />
+          </div>
         </div>
 
         <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={handleSubmit} disabled={loading}>
-            {loading ? 'Placing...' : 'Place Order'}
+          <button className="btn btn-secondary btn-sm" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary btn-sm" onClick={handleSubmit} disabled={loading}>
+            {loading ? 'Creating...' : 'Create Order'}
           </button>
         </div>
       </div>
@@ -141,34 +141,38 @@ function OrderDetailModal({ orderId, onClose }) {
       <div className="modal modal-lg">
         <div className="modal-header">
           <h3>Order #{orderId}</h3>
-          <button className="btn-icon" onClick={onClose}>✕</button>
+          <button className="btn-icon" onClick={onClose}><X size={16} /></button>
         </div>
-        {loading ? <div className="loading"><div className="spinner" /></div> : order && (
-          <>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
-              <div style={{ background: 'var(--bg)', borderRadius: 8, padding: 14, border: '1px solid var(--border)' }}>
-                <p style={{ color: 'var(--text3)', fontSize: '0.72rem', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Customer</p>
-                <p style={{ fontWeight: 600 }}>{order.customer?.name}</p>
-                <p style={{ color: 'var(--text2)', fontSize: '0.83rem' }}>{order.customer?.email}</p>
+        {loading ? (
+          <div className="loading"><div className="spinner" /></div>
+        ) : order && (
+          <div className="modal-body">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
+              <div className="info-plate">
+                <div className="info-label">Customer</div>
+                <div className="info-value">{order.customer?.name || '—'}</div>
+                <div className="info-sub">{order.customer?.email}</div>
               </div>
-              <div style={{ background: 'var(--bg)', borderRadius: 8, padding: 14, border: '1px solid var(--border)' }}>
-                <p style={{ color: 'var(--text3)', fontSize: '0.72rem', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Order Info</p>
-                <p style={{ fontWeight: 600 }}>₹{order.total_amount.toLocaleString()}</p>
-                <p style={{ color: 'var(--text2)', fontSize: '0.83rem' }}>{new Date(order.created_at).toLocaleString()}</p>
+              <div className="info-plate">
+                <div className="info-label">Total</div>
+                <div className="info-value" style={{ fontSize: '1.15rem', color: 'var(--primary-text)' }}>
+                  ₹{order.total_amount.toLocaleString('en-IN')}
+                </div>
+                <div className="info-sub">{new Date(order.created_at).toLocaleString('en-IN')}</div>
               </div>
             </div>
 
             <div className="form-group">
-              <label>Update Status</label>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <label>Status</label>
+              <div className="status-picker">
                 {STATUS_OPTIONS.map(s => (
                   <button
                     key={s}
-                    className={`badge badge-${STATUS_COLORS[s]} ${order.status === s ? '' : ''}`}
-                    style={{ cursor: 'pointer', border: order.status === s ? '1px solid currentColor' : '1px solid transparent', padding: '5px 12px', fontSize: '0.78rem', fontWeight: 600 }}
+                    className={`status-btn ${order.status === s ? 'active' : ''}`}
+                    style={{ color: STATUS_VAR[STATUS_COLORS[s]] }}
                     onClick={() => handleStatus(s)}
                   >
-                    {s}
+                    <span style={{ color: order.status === s ? '#fff' : STATUS_VAR[STATUS_COLORS[s]] }}>{s}</span>
                   </button>
                 ))}
               </div>
@@ -177,19 +181,29 @@ function OrderDetailModal({ orderId, onClose }) {
             <div className="form-group">
               <label>Items</label>
               <div className="order-items-list">
-                <div className="order-item-line" style={{ background: 'var(--bg)', fontWeight: 600, fontSize: '0.75rem', color: 'var(--text3)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                  <span>Product</span><span>Qty</span><span>Subtotal</span>
+                <div className="order-item-line" style={{
+                  background: 'var(--bg-subtle)',
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  color: 'var(--text-3)',
+                }}>
+                  <span>Product</span><span>Qty</span><span style={{ textAlign: 'right' }}>Subtotal</span>
                 </div>
                 {order.items.map(item => (
                   <div key={item.id} className="order-item-line">
-                    <span className="td-name">{item.product?.name || `Product #${item.product_id}`}</span>
+                    <span className="td-name">{item.product?.name || `Item #${item.product_id}`}</span>
                     <span>{item.quantity}</span>
-                    <span>₹{(item.unit_price * item.quantity).toLocaleString()}</span>
+                    <span className="td-amount" style={{ textAlign: 'right' }}>₹{(item.unit_price * item.quantity).toLocaleString('en-IN')}</span>
                   </div>
                 ))}
-                <div className="order-item-line" style={{ borderTop: '2px solid var(--border2)', fontWeight: 700 }}>
-                  <span></span><span style={{ color: 'var(--text3)' }}>Total</span>
-                  <span style={{ color: 'var(--accent2)' }}>₹{order.total_amount.toLocaleString()}</span>
+                <div className="order-item-line" style={{ background: 'var(--bg-subtle)', fontWeight: 600 }}>
+                  <span style={{ color: 'var(--text-3)' }}>Total</span>
+                  <span />
+                  <span className="td-amount" style={{ textAlign: 'right', color: 'var(--primary-text)', fontSize: '1rem' }}>
+                    ₹{order.total_amount.toLocaleString('en-IN')}
+                  </span>
                 </div>
               </div>
             </div>
@@ -197,10 +211,10 @@ function OrderDetailModal({ orderId, onClose }) {
             {order.notes && (
               <div className="form-group">
                 <label>Notes</label>
-                <p style={{ color: 'var(--text2)', fontSize: '0.88rem' }}>{order.notes}</p>
+                <div className="info-plate" style={{ color: 'var(--text-2)' }}>{order.notes}</div>
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>
@@ -217,7 +231,7 @@ export default function Orders() {
   const load = () => {
     setLoading(true);
     getOrders()
-      .then(r => setOrders([...r.data].reverse()))
+      .then(r => setOrders(r.data))
       .catch(err => toast.error(err.response?.data?.detail || 'Failed to load orders'))
       .finally(() => setLoading(false));
   };
@@ -228,10 +242,10 @@ export default function Orders() {
     if (!window.confirm(`Cancel order #${o.id}? Stock will be restored.`)) return;
     try {
       await deleteOrder(o.id);
-      toast.success('Order cancelled and stock restored');
+      toast.success('Order cancelled');
       load();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to cancel order');
+      toast.error(err.response?.data?.detail || 'Failed to cancel');
     }
   };
 
@@ -244,38 +258,53 @@ export default function Orders() {
   return (
     <>
       <div className="page-header">
-        <div><h2>Orders</h2><p>{orders.length} order{orders.length !== 1 ? 's' : ''} total</p></div>
+        <div>
+          <h2>Orders</h2>
+          <p className="subtitle">{orders.length} order{orders.length !== 1 ? 's' : ''} total</p>
+        </div>
         <button className="btn btn-primary" onClick={() => setShowCreate(true)}><Plus size={15} /> New Order</button>
       </div>
 
       <div className="card">
-        <div style={{ marginBottom: 16 }}>
+        <div className="search-bar">
           <div className="search-wrap">
             <Search size={15} className="search-icon" />
-            <input className="form-control" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by order #, customer, or status..." />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by order #, customer, or status..." />
           </div>
         </div>
+
         {loading ? <div className="loading"><div className="spinner" /></div> : (
           filtered.length === 0 ? (
-            <div className="empty-state"><ShoppingCart size={40} /><p>{search ? 'No orders match.' : 'No orders yet. Create your first order!'}</p></div>
+            <div className="empty-state">
+              <div className="icon-wrap"><ShoppingCart size={20} /></div>
+              <p>{search ? 'No orders match your search' : 'No orders yet. Click "New Order" to get started.'}</p>
+            </div>
           ) : (
             <div className="table-wrap">
               <table>
                 <thead>
-                  <tr><th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th className="hide-mobile num">Items</th>
+                    <th className="num">Total</th>
+                    <th>Status</th>
+                    <th className="hide-mobile">Date</th>
+                    <th style={{ width: 80, textAlign: 'right' }}>Actions</th>
+                  </tr>
                 </thead>
                 <tbody>
                   {filtered.map(o => (
                     <tr key={o.id}>
                       <td className="td-name">#{o.id}</td>
                       <td>{o.customer?.name || '—'}</td>
-                      <td style={{ color: 'var(--text3)' }}>{o.items?.length || 0} item{(o.items?.length || 0) !== 1 ? 's' : ''}</td>
-                      <td style={{ fontWeight: 600 }}>₹{o.total_amount.toLocaleString()}</td>
+                      <td className="hide-mobile num td-muted">{o.items?.length || 0}</td>
+                      <td className="num td-amount">₹{o.total_amount.toLocaleString('en-IN')}</td>
                       <td><span className={`badge badge-${STATUS_COLORS[o.status] || 'gray'}`}>{o.status}</span></td>
-                      <td style={{ fontSize: '0.8rem' }}>{new Date(o.created_at).toLocaleDateString()}</td>
-                      <td>
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <button className="btn-icon" onClick={() => setViewId(o.id)} title="View Details"><Eye size={14} /></button>
+                      <td className="hide-mobile td-muted">{new Date(o.created_at).toLocaleDateString('en-IN')}</td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'inline-flex', gap: 4 }}>
+                          <button className="btn-icon" onClick={() => setViewId(o.id)} title="View"><Eye size={14} /></button>
                           {o.status !== 'delivered' && (
                             <button className="btn-icon btn-icon-danger" onClick={() => handleDelete(o)} title="Cancel"><Trash2 size={14} /></button>
                           )}
