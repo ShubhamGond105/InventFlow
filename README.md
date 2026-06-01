@@ -10,7 +10,7 @@ A full-stack, production-ready Inventory & Order Management System built with **
 |---|---|
 | Frontend | _[https://invent-flow.vercel.app/]_ |
 | Backend API | _[https://inventflow.onrender.com]_ |
-| API Docs | `[https://inventflow.onrender.com]/docs` |
+| API Docs | [https://inventflow.onrender.com/docs] |
 
 ---
 
