@@ -8,9 +8,9 @@ A full-stack, production-ready Inventory & Order Management System built with **
 
 | Service | URL |
 |---|---|
-| Frontend | _[your Vercel/Netlify URL]_ |
-| Backend API | _[your Render/Railway URL]_ |
-| API Docs | `[backend-url]/docs` |
+| Frontend | _[https://invent-flow.vercel.app/]_ |
+| Backend API | _[https://inventflow.onrender.com]_ |
+| API Docs | `[https://inventflow.onrender.com]/docs` |
 
 ---
 
